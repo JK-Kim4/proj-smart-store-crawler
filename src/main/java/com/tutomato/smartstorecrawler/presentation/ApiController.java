@@ -81,14 +81,20 @@ public class ApiController {
         WebClient wc = getWebClientInstance(baseUrl);
 
         return wc.get()
-                .uri("ttp://211.255.17.229:9090/kr/api/books?pageNum=1&pageSize=10")
+                .uri(uriBuilder -> uriBuilder
+                        .queryParam("query", "110256")
+                        .build())
                 .retrieve()
                 .bodyToMono(String.class);
 
     }
 
     private WebClient getWebClientInstance(String baseUrl){
-        WebClient wc = WebClient.builder().baseUrl(baseUrl).build();
+        WebClient wc = WebClient.builder()
+                .baseUrl(baseUrl)
+                .defaultHeader("X-Naver-Client-Id", "DC2ZrI9OYy7e164mXC5N")
+                .defaultHeader("X-Naver-Client-Secret", "q2vsrv1Y8R")
+                .build();
         return wc;
     }
 
