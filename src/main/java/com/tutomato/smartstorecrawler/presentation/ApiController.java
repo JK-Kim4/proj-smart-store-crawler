@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -75,20 +76,15 @@ public class ApiController {
 
     }
 
-    public Map<String, String> webClientApiCall(String apiUrl, String code){
+    public Mono<String> webClientApiCall(String baseUrl, String code){
         Map<String, String> result = new HashMap<>();
-        WebClient wc = getWebClientInstance("https://openapi.naver.com/v1/search/shop.json");
+        WebClient wc = getWebClientInstance(baseUrl);
 
-        wc.get()
-                .uri(uriBuilder -> uriBuilder
-                        .queryParam("query",code)
-                        .build())
+        return wc.get()
+                .uri("ttp://211.255.17.229:9090/kr/api/books?pageNum=1&pageSize=10")
                 .retrieve()
-                .bodyToMono(String.class)
-                .block();
+                .bodyToMono(String.class);
 
-
-        return result;
     }
 
     private WebClient getWebClientInstance(String baseUrl){
