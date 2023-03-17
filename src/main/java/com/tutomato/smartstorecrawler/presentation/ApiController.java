@@ -3,6 +3,7 @@ package com.tutomato.smartstorecrawler.presentation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -10,6 +11,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -70,6 +73,27 @@ public class ApiController {
             return "";
         }
 
+    }
+
+    public Map<String, String> webClientApiCall(String apiUrl, String code){
+        Map<String, String> result = new HashMap<>();
+        WebClient wc = getWebClientInstance("https://openapi.naver.com/v1/search/shop.json");
+
+        wc.get()
+                .uri(uriBuilder -> uriBuilder
+                        .queryParam("query",code)
+                        .build())
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+
+        return result;
+    }
+
+    private WebClient getWebClientInstance(String baseUrl){
+        WebClient wc = WebClient.builder().baseUrl(baseUrl).build();
+        return wc;
     }
 
 
