@@ -1,23 +1,28 @@
 package com.tutomato.smartstorecrawler.presentation;
 
+import com.tutomato.smartstorecrawler.domain.Item;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-@RestController
+@Controller
 @RequestMapping("/api")
 public class ApiController {
+
+    private final Logger logger = LoggerFactory.getLogger(ApiController.class);
 
     /**
      * 상품 코드를 입력받아
@@ -38,6 +43,15 @@ public class ApiController {
             System.out.println(result.toString());
         }
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/doCrawling")
+    @ResponseBody
+    public int doCrawling(
+            @RequestBody List<Item> items){
+        logger.info("parameter array = {}", items.size());
+
+        return items.size();
     }
 
     /*API 호출 메소드*/

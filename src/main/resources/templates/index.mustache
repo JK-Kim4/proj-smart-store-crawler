@@ -1,81 +1,88 @@
-<!doctype html>
-<html lang="kr">
+<!DOCTYPE html>
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>최저 가격 조회</title>
+    <title>js excel example 03</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+    <script>
+        function excelExport(event){
+            excelExportCommon(event, handleExcelDataAll);
+        }
+        function excelExportCommon(event, callback){
+            var input = event.target;
+            var reader = new FileReader();
+
+            reader.readAsBinaryString(input.files[0]);
+
+            reader.onload = function(){
+                var fileData = reader.result;
+                var wb = XLSX.read(fileData, {type : 'binary'});
+                var sheetNameList = wb.SheetNames; // 시트 이름 목록 가져오기
+                var firstSheetName = sheetNameList[0]; // 첫번째 시트명
+                var firstSheet = wb.Sheets[firstSheetName]; // 첫번째 시트
+                callback(firstSheet);
+            };
+
+        }
+        function handleExcelDataAll(sheet){
+
+            $.ajax({
+                url: "/api/doCrawling",
+                method: "POST",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(XLSX.utils.sheet_to_json (sheet)),
+                dataType:"json",
+                success: function (result){
+                    alert(result);
+                }
+            })
+
+            /*handleExcelDataHeader(sheet); // header 정보
+            handleExcelDataJson(sheet); // json 형태
+            handleExcelDataCsv(sheet); // csv 형태
+            handleExcelDataHtml(sheet); // html 형태*/
+        }
+        function handleExcelDataHeader(sheet){
+            var headers = get_header_row(sheet);
+            $("#displayHeaders").html(JSON.stringify(headers));
+        }
+        function handleExcelDataJson(sheet){
+            $("#displayExcelJson").html(JSON.stringify(XLSX.utils.sheet_to_json (sheet)));
+        }
+        function handleExcelDataCsv(sheet){
+            $("#displayExcelCsv").html(XLSX.utils.sheet_to_csv (sheet));
+        }
+        function handleExcelDataHtml(sheet){
+            $("#displayExcelHtml").html(XLSX.utils.sheet_to_html (sheet));
+        }
+        // 출처 : https://github.com/SheetJS/js-xlsx/issues/214
+        function get_header_row(sheet) {
+            var headers = [];
+            var range = XLSX.utils.decode_range(sheet['!ref']);
+            var C, R = range.s.r; /* start in the first row */
+            /* walk every column in the range */
+            for(C = range.s.c; C <= range.e.c; ++C) {
+                var cell = sheet[XLSX.utils.encode_cell({c:C, r:R})] /* find the cell in the first row */
+
+                var hdr = "UNKNOWN " + C; // <-- replace with your desired default
+                if(cell && cell.t) hdr = XLSX.utils.format_cell(cell);
+
+                headers.push(hdr);
+            }
+            return headers;
+        }
+    </script>
 </head>
-<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="card-header">
-                <input type="file" id="excelFile" accept=".xls, .xlsx, .csv, .xml" onchange="javascript:readExcel();">
-                <button id="startButton"> 최저 가격 조회 </button>
-            </div>
-            <div class="card-body">
-                <table id="excelTable">
-                    <thead>
-                    <th>
-                        <td>상품 번호</td>
-                        <td>상품 명</td>
-                        <td>정상가</td>
-                        <td>판매가</td>
-                        <td>네이버 최저가</td>
-                        <td>최저가 상점 주소</td>
-                    </th>
-                    </thead>
-                    <tbody id="resultBody">
-
-                    </tbody>
-                </table>
-            </div>
-            <div class="card-footer">
-
-            </div>
-        </div>
-
-    </div>
-<script>
-    let excelDataArray = [];
-
-    $(document).ready(function(){
-
-    });
-
-    function readExcel() {
-        let input = event.target;
-        let reader = new FileReader();
-        reader.onload = function () {
-            let data = reader.result;
-            let workBook = XLSX.read(data, { type: 'binary' });
-            workBook.SheetNames.forEach(function (sheetName) {
-                console.log('SheetName: ' + sheetName);
-                let rows = XLSX.utils.sheet_to_json(workBook.Sheets[sheetName]);
-                /*console.log(JSON.stringify(rows));*/
-                console.log(rows);
-
-                $.ajax({
-                   url: "",
-                   method: "",
-                   success: function (){
-
-                   },
-                   error: function (){
-
-                   }
-                });
-
-            });
-        };
-        reader.readAsBinaryString(input.files[0]);
-    }
-
-</script>
-
-
+파일 선택 : <input type="file" id="excelFile" onchange="excelExport(event)"/>
+<h1>Header 정보 보기</h1>
+<div id="displayHeaders"></div>
+<h1>JSON 형태로 보기</h1>
+<div id="displayExcelJson"></div>
+<h1>CSV 형태로 보기</h1>
+<div id="displayExcelCsv"></div>
+<h1>HTML 형태로 보기</h1>
+<div id="displayExcelHtml"></div>
 </body>
 </html>
