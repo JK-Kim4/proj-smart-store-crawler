@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="kr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>최저 가격 조회</title>
+</head>
+<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.14.3/xlsx.full.min.js"></script>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <input type="file" id="excelFile" accept=".xls, .xlsx, .csv, .xml" onchange="javascript:readExcel();">
+                <button id="startButton"> 최저 가격 조회 </button>
+            </div>
+            <div class="card-body">
+                <table id="excelTable">
+                    <thead>
+                    <th>
+                        <td>상품 번호</td>
+                        <td>상품 명</td>
+                        <td>정상가</td>
+                        <td>판매가</td>
+                        <td>네이버 최저가</td>
+                        <td>최저가 상점 주소</td>
+                    </th>
+                    </thead>
+                    <tbody id="resultBody">
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer">
+
+            </div>
+        </div>
+
+    </div>
+<script>
+    let excelDataArray = [];
+
+    $(document).ready(function(){
+
+    });
+
+    function readExcel() {
+        let input = event.target;
+        let reader = new FileReader();
+        reader.onload = function () {
+            let data = reader.result;
+            let workBook = XLSX.read(data, { type: 'binary' });
+            workBook.SheetNames.forEach(function (sheetName) {
+                console.log('SheetName: ' + sheetName);
+                let rows = XLSX.utils.sheet_to_json(workBook.Sheets[sheetName]);
+                /*console.log(JSON.stringify(rows));*/
+                console.log(rows);
+
+                $.ajax({
+                   url: "",
+                   method: "",
+                   success: function (){
+
+                   },
+                   error: function (){
+
+                   }
+                });
+
+            });
+        };
+        reader.readAsBinaryString(input.files[0]);
+    }
+
+</script>
+
+
+</body>
+</html>
