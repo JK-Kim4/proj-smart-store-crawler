@@ -3,6 +3,7 @@ package com.tutomato.smartstorecrawler.domain;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * 크롤링 결과 Entity
@@ -10,17 +11,20 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class Item {
 
     private String name;
 
-    private Integer productNumber;
+    private String productNumber1;
+
+    private String productNumber2;
 
     private Integer orgPrice;
 
     private Integer salePrice;
 
-    private Integer lowerPrice;
+    private String lowerPrice;
 
     private String shopUrl;
 
