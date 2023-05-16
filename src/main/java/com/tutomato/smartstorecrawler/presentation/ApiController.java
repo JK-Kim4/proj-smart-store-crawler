@@ -3,7 +3,6 @@ package com.tutomato.smartstorecrawler.presentation;
 import com.google.gson.Gson;
 import com.tutomato.smartstorecrawler.domain.Item;
 import com.tutomato.smartstorecrawler.domain.ItemResponse;
-import com.tutomato.smartstorecrawler.domain.TestVo;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -15,14 +14,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
+import java.net.URLEncoder;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 
 @Controller
@@ -50,116 +52,111 @@ public class ApiController {
         return items;
     }
 
-    @GetMapping("/get/excel/users")
-    public void excel(HttpServletRequest req, HttpServletResponse res) {
-        try {
-            List<TestVo> listData = new ArrayList<TestVo>();
-            TestVo testVo = new TestVo();
+    @PostMapping("/download")
+    public void downloadMethod(
+            @ModelAttribute List<Item> items,
+            HttpServletResponse res) throws UnsupportedEncodingException {
 
-            testVo.setUserName("홍길동");
-            testVo.setUserAge("20");
-            testVo.setAddress("서울시");
-            listData.add(testVo);
+        if(items != null &&  !items.isEmpty()){
 
-            testVo = new TestVo();
-            testVo.setUserName("김길동");
-            testVo.setUserAge("25");
-            testVo.setAddress("부산시");
-            listData.add(testVo);
+            final String fileName = "스마트스토어_최저가_"
+                    + LocalDate.now().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT));
 
-            testVo = new TestVo();
-            testVo.setUserName("강길동");
-            testVo.setUserAge("23");
-            testVo.setAddress("충북");
-            listData.add(testVo);
+            /* 엑셀 그리기 */
+            final String[] colNames = {
+                    "No", "상품명", "상품번호", "원가", "판매가", "최저가", "쇼핑몰 주소"
+            };
 
-            if(listData != null && listData.size() > 0) {
-                final String fileName = "userList.xlsx";
+            // 헤더 사이즈
+            final int[] colWidths = {
+                    3000, 5000, 5000, 3000, 3000, 3000, 3000
+            };
 
-                /* 엑셀 그리기 */
-                final String[] colNames = {
-                        "No", "성명", "나이", "거주지"
-                };
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            XSSFSheet sheet = null;
+            XSSFCell cell = null;
+            XSSFRow row = null;
 
-                // 헤더 사이즈
-                final int[] colWidths = {
-                        3000, 5000, 5000, 3000
-                };
+            //Font
+            Font fontHeader = workbook.createFont();
+            fontHeader.setFontName("맑은 고딕");	//글씨체
+            fontHeader.setFontHeight((short)(9 * 20));	//사이즈
 
-                XSSFWorkbook workbook = new XSSFWorkbook();
-                XSSFSheet sheet = null;
-                XSSFCell cell = null;
-                XSSFRow row = null;
+            Font font9 = workbook.createFont();
+            font9.setFontName("맑은 고딕");	//글씨체
+            font9.setFontHeight((short)(9 * 20));	//사이즈
 
-                //Font
-                Font fontHeader = workbook.createFont();
-                fontHeader.setFontName("맑은 고딕");	//글씨체
-                fontHeader.setFontHeight((short)(9 * 20));	//사이즈
+            // 엑셀 헤더 셋팅
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFont(fontHeader);
+            // 엑셀 바디 셋팅
+            CellStyle bodyStyle = workbook.createCellStyle();
+            bodyStyle.setFont(font9);
 
-                Font font9 = workbook.createFont();
-                font9.setFontName("맑은 고딕");	//글씨체
-                font9.setFontHeight((short)(9 * 20));	//사이즈
-                // 엑셀 헤더 셋팅
-                CellStyle headerStyle = workbook.createCellStyle();
-                headerStyle.setFont(fontHeader);
-                // 엑셀 바디 셋팅
-                CellStyle bodyStyle = workbook.createCellStyle();
-                bodyStyle.setFont(font9);
+            // 엑셀 왼쪽 설정
+            CellStyle leftStyle = workbook.createCellStyle();
+            leftStyle.setFont(font9);
 
-                // 엑셀 왼쪽 설정
-                CellStyle leftStyle = workbook.createCellStyle();
-                leftStyle.setFont(font9);
+            //rows
+            int rowCnt = 0;
+            int cellCnt = 0;
+            int listCount = items.size();
 
-                //rows
-                int rowCnt = 0;
-                int cellCnt = 0;
-                int listCount = listData.size();
-
-                // 엑셀 시트명 설정
-                sheet = workbook.createSheet("사용자현황");
-                row = sheet.createRow(rowCnt++);
-                //헤더 정보 구성
-                for (int i = 0; i < colNames.length; i++) {
-                    cell = row.createCell(i);
-                    cell.setCellStyle(headerStyle);
-                    cell.setCellValue(colNames[i]);
-                    sheet.setColumnWidth(i, colWidths[i]);	//column width 지정
-                }
-                //데이터 부분 생성
-                for(TestVo vo : listData) {
-                    cellCnt = 0;
-                    row = sheet.createRow(rowCnt++);
-                    // 넘버링
-                    cell = row.createCell(cellCnt++);
-                    cell.setCellStyle(bodyStyle);
-                    cell.setCellValue(listCount--);
-                    // 성명
-                    cell = row.createCell(cellCnt++);
-                    cell.setCellStyle(bodyStyle);
-                    cell.setCellValue(vo.getUserName());
-                    // 나이
-                    cell = row.createCell(cellCnt++);
-                    cell.setCellStyle(bodyStyle);
-                    cell.setCellValue(vo.getUserAge());
-
-                    // 주소
-                    cell = row.createCell(cellCnt++);
-                    cell.setCellStyle(bodyStyle);
-                    cell.setCellValue(vo.getAddress());
-                }
-                res.setContentType("application/vnd.ms-excel");
-                // 엑셀 파일명 설정
-                res.setHeader("Content-Disposition", "attachment;filename=" + fileName);
-                try {
-                    workbook.write(res.getOutputStream());
-                } catch(IOException e) {
-                    e.printStackTrace();
-                } catch(Exception e) {
-                    e.printStackTrace();
-                }
+            // 엑셀 시트명 설정
+            sheet = workbook.createSheet("최저가검색결과");
+            row = sheet.createRow(rowCnt++);
+            //헤더 정보 구성
+            for (int i = 0; i < colNames.length; i++) {
+                cell = row.createCell(i);
+                cell.setCellStyle(headerStyle);
+                cell.setCellValue(colNames[i]);
+                sheet.setColumnWidth(i, colWidths[i]);	//column width 지정
             }
-        }catch(Exception e) {
-            e.printStackTrace();
+
+            for(Item i : items) {
+                cellCnt = 0;
+                row = sheet.createRow(rowCnt++);
+                // 넘버링
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(listCount--);
+                // 성명 "상품명", "상품번호", "원가", "판매가", "최저가", "쇼핑몰 주소"
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(i.getName());
+                // 상품번호
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(i.getProductNumber1());
+                // 원가
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(i.getOrgPrice());
+                // 판매가
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(i.getSalePrice());
+                // 최저가
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(i.getLowerPrice());
+                // 쇼핑몰주소
+                cell = row.createCell(cellCnt++);
+                cell.setCellStyle(bodyStyle);
+                cell.setCellValue(i.getShopUrl());
+            }
+
+            res.setContentType("application/vnd.ms-excel");
+            // 엑셀 파일명 설정
+            res.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8")+".xlsx");
+            try {
+                workbook.write(res.getOutputStream());
+                workbook.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
