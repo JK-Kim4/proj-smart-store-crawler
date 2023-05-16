@@ -23,7 +23,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.5/xlsx.full.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.fileDownload/1.4.2/jquery.fileDownload.min.js" integrity="sha512-MZrUNR8jvUREbH8PRcouh1ssNRIVHYQ+HMx0HyrZTezmoGwkuWi1XoaRxWizWO8m0n/7FXY2SSAsr2qJXebUcA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js" integrity="sha512-UnrKxsCMN9hFk7M56t4I4ckB4N/2HHi0w/7+B/1JsXIX3DmyBcsGpT3/BsuZMZf+6mAr0vP81syWtfynHJ69JA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"></script>
 
     <style>
         body {
@@ -78,14 +79,14 @@
         </div>
         <hr>
         <div class="table-responsive">
-            <table class="table table-striped table-sm">
+            <table class="table table-striped table-sm" id="tableData">
                 <thead>
                     <tr>
-                        <th>상품명</th>
+                        <th class="col-md-4">상품명</th>
                         <th>품번</th>
                         <th>판매가</th>
                         <th>최저가</th>
-                        <th>판매 URL 바로가기</th>
+                        <th class="col-md-4">URL</th>
                     </tr>
                 </thead>
                 <tbody id="resultDiv">
@@ -98,11 +99,9 @@
 <script>
 
     let excelData;
-    let downloadData;
-
     $(document).ready(function (){
         $("#downloadBtn").on("click", function (){
-            download();
+            exportExcel();
         });
 
         $("#crawlingBtn").on("click", function (){
@@ -125,23 +124,27 @@
                     if(result.length > 0){
                         $.each(result, function (index, elem){
                            html += "<tr>" +
-                                       "<td>" +elem.name+ "</td>" +
+                                       "<td class='col-md-4'>" +elem.name+ "</td>" +
                                        "<td>" +elem.productNumber1+ "</td>";
-                           if(elem.salePrice != null && elem.salePrice != undefined){
-                           html +=      "<td>" +elem.salePrice+ "</td>";
-                           }else{
-                           html +=      "<td> - </td>";
-                           }
-                            if(elem.lowerPrice != null && elem.lowerPrice != undefined){
-                            html +=     "<td>" +elem.lowerPrice+ "</td>";
+                            if(elem.salePrice != null && elem.salePrice != undefined){
+                                html +=      "<td>" +elem.salePrice+ "</td>";
                             }else{
-                            html +=     "<td> - </td>";
+                                html +=      "<td> - </td>";
                             }
-                            html +=     "<td><a href='"+elem.shopUrl+"' target='_blank'>바로가기</a></td>" +
-                                   "</tr>"
+                            if(elem.lowerPrice != null && elem.lowerPrice != undefined){
+                                html +=     "<td>" +elem.lowerPrice+ "</td>";
+                            }else{
+                                html +=     "<td> - </td>";
+                            }
+
+                            if(elem.shopUrl != null && elem.shopUrl != undefined){
+                                html +=     "<td class='col-md-4' '><a href='"+elem.shopUrl+"' target='_blank'>"+elem.shopUrl+"</a></td>";
+                            }else{
+                                html +=     "<td> - </td>";
+                            }
+                             html += "</tr>";
                         });
 
-                        downloadData = result;
                     }else{
                         html += "<tr><td colspan='5'>데이터를 조회할 수 없습니다.</td></tr>"
                     }
@@ -194,91 +197,43 @@
         $('#loadingImg').hide();
     }
 
-    function download() {
+    function exportExcel(){
+        // step 1. workbook 생성
+        var wb = XLSX.utils.book_new();
 
-        let excelTable = "";
+        // step 2. 시트 만들기
+        var newWorksheet = excelHandler.getWorksheet();
 
-        excelTable += "<table border='1'>";
-        excelTable += "		<thead>";
-        excelTable += "			<tr>";
-        excelTable += "				<td>No</td>";
-        excelTable += "				<td>구분</td>";
-        excelTable += "				<td>수식</td>";
-        excelTable += "				<td>계산주파수</td>";
-        excelTable += "				<td>충돌여부</td>";
-        excelTable += "			</tr>";
-        excelTable += "		</thead>";
-        excelTable += "		<tbody>";
+        // step 3. workbook에 새로만든 워크시트에 이름을 주고 붙인다.
+        XLSX.utils.book_append_sheet(wb, newWorksheet, excelHandler.getSheetName());
 
-        if (downloadData.length > 0) {
+        // step 4. 엑셀 파일 만들기
+        var wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'binary'});
 
-            for (let i = 0; i < downloadData.length; i++) {
-
-                excelTable += "<tr>";
-                excelTable += "		<td>"+downloadData[i].no+"</td>";
-                excelTable += "		<td>"+downloadData[i].gubun+"</td>";
-                excelTable += "		<td>"+downloadData[i].formula+"</td>";
-                excelTable += "		<td>"+downloadData[i].calcFrq+"</td>";
-                excelTable += "		<td>"+downloadData[i].collisMsg+"</td>";
-                excelTable += "</tr>";
-
-
-            }
-
-        } else {
-
-            excelTable += "<tr>";
-            excelTable += "		<td colspan='5'>데이터가 없습니다</td>";
-            excelTable += "</tr>";
-
-        }
-
-        excelTable += "		</tbody>";
-        excelTable += "	</table>";
-
-        //파일명, 시트명, html
-        excelDown("test.xml", "sheets1", excelTable);
-
+        // step 5. 엑셀 파일 내보내기
+        saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), excelHandler.getExcelFileName());
     }
 
-    function excelDown(fileName, sheetName, sheetHtml) {
+    var excelHandler = {
+        getExcelFileName : function(){
+            return 'table-test.xlsx';	//파일명
+        },
+        getSheetName : function(){
+            return 'Table Test Sheet';	//시트명
+        },
+        getExcelData : function(){
+            return document.getElementById('tableData'); 	//TABLE id
+        },
+        getWorksheet : function(){
+            return XLSX.utils.table_to_sheet(this.getExcelData());
+        }
+    }
 
-        let html = "";
-
-        html += "<html xmlns:x='urn:schemas-microsoft-com:office:excel' >";
-        html += "   <haed>";
-        html += "       <meta http-equiv='content-type' content='application/vnd.ms-excel; charset=UTF-8'>";
-        html += "       <xml>";
-        html += "           <x:ExcelWorkbook>";
-        html += "               <x:ExcelWorksheets>";
-        html += "                   <x:ExcelWorksheets>";
-        html += "                       <x:name>"+sheetName+"</x:name>";
-        html += "                       <x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions>";
-        html += "                   </x:ExcelWorksheets>";
-        html += "               </x:ExcelWorksheets>";
-        html += "           </x:ExcelWorkbook>";
-        html += "       </xml>";
-        html += "   </haed>";
-
-        html += "   <body>";
-        html += sheetHtml;
-        html += "   </body>";
-        html += "</html>";
-
-        let data_type = "data:application/vnd.ms-excel";
-        let ua = window.navigator.userAgent;
-        let blob = new Blob([html], {type: "application/csv; charset=utf-8"});
-
-        let anchor = window.document.createElement('a');
-
-        anchor.href = window.URL.createObjectURL(blob);
-        anchor.download = fileName;
-        document.body.appendChild(anchor);
-        anchor.click();
-
-        //다운로드 후 제거
-        document.body.removeChild(anchor);
-
+    function s2ab(s) {
+        var buf = new ArrayBuffer(s.length); //convert s to arrayBuffer
+        var view = new Uint8Array(buf);  //create uint8array as viewer
+        for (var i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; //convert to octet
+        return buf;
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
