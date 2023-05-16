@@ -72,7 +72,7 @@
         <div class="form-group">
             <input type="file" onchange="readExcel()">
             <button type="button" id="crawlingBtn">최저가 검색 시작</button>
-            <button type="button" id="downloadBtn" disabled>엑셀 다운로드</button>
+            <button type="button" id="downloadBtn">엑셀 다운로드</button>
         </div>
         <hr>
         <div class="table-responsive">
@@ -95,22 +95,27 @@
     </div>
 <script>
 
-    let excelDate;
+    let excelData;
+    let downloadData;
 
     $(document).ready(function (){
+        $("#downloadBtn").on("click", function (){
+            console.log(downloadData);
+        });
+
         $("#crawlingBtn").on("click", function (){
 
-            if(excelDate == null || excelDate == undefined || excelDate == ""){
+            if(excelData == null || excelData == undefined || excelData == ""){
                 alert("파일 선택 클릭 후 엑셀 데이터를 선택한 뒤 조회해 주세요. ");
                 return;
             }
 
-            this.showLoadingBar();
+            showLoadingBar();
 
             $.ajax({
                 url: "/api/doCrawling",
                 method: "POST",
-                data: excelDate,
+                data: excelData,
                 contentType:"application/json; charset=utf-8",
                 dataType: "json",
                 success: function (result){
@@ -130,18 +135,22 @@
                             }else{
                             html +=     "<td> - </td>";
                             }
-                            html +=     "<td><a href='"+elem.shopUrl+"'>바로가기</a></td>" +
+                            html +=     "<td><a href='"+elem.shopUrl+"' target='_blank'>바로가기</a></td>" +
                                    "</tr>"
                         });
+
+                        downloadData = JSON.stringify(result);
                     }else{
                         html += "<tr><td colspan='5'>데이터를 조회할 수 없습니다.</td></tr>"
                     }
                     $("#resultDiv").html(html);
 
-                    this.hideLoadingBar();
+                    hideLoadingBar();
                 },
                 error: function (x,h,r){
                     console.log(x);
+                    alert("시스템 오류 발생, 엑셀 파일 확인 후 다시 시도해 주세요.");
+                    return;
                 }
             });
         }) ;
@@ -159,7 +168,7 @@
                 console.log(JSON.stringify(rows));
                 console.log(rows);
 
-                excelDate = JSON.stringify(rows);
+                excelData = JSON.stringify(rows);
             })
         };
         reader.readAsBinaryString(input.files[0]);
