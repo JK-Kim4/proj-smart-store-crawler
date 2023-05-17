@@ -10,4 +10,4 @@ server:
     encoding:
       charset: UTF-8
       force: true
-  port: 11808
+  port: 5099
