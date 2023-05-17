@@ -1,10 +1,12 @@
 package com.tutomato.smartstorecrawler.presentation;
 
 import com.google.gson.Gson;
+import com.tutomato.smartstorecrawler.domain.CommonValue;
 import com.tutomato.smartstorecrawler.domain.Item;
 import com.tutomato.smartstorecrawler.domain.ItemResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,9 +23,13 @@ import java.util.List;
 @RequestMapping("/api")
 public class ApiController {
 
-    private final Logger logger = LoggerFactory.getLogger(ApiController.class);
+    @Value("${naver.api.clientId}")
+    private String clientId;
 
-    private final String baseRequestUrl = "https://openapi.naver.com/v1/search/shop.json?sort=asc&display=1&start=1&query=";
+    @Value("${naver.api.clientSecret}")
+    private String clientSecret;
+
+    private final Logger logger = LoggerFactory.getLogger(ApiController.class);
 
     @PostMapping("/doCrawling")
     @ResponseBody
@@ -44,9 +50,7 @@ public class ApiController {
 
     private ItemResponse getLowerPrice(String productNumber){
 
-        String clientId = "DC2ZrI9OYy7e164mXC5N";
-        String clientSecret = "q2vsrv1Y8R";
-        String apiURL = baseRequestUrl + productNumber;
+        String apiURL = CommonValue.API_BASE_URL + productNumber;
         ItemResponse result = new ItemResponse();
 
         try {

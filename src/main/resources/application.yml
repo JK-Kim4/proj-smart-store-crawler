@@ -1,9 +1,13 @@
 spring:
   mustache:
     charset: UTF-8
+  config:
+    activate:
+      on-profile: key
 
 server:
   servlet:
     encoding:
       charset: UTF-8
       force: true
+

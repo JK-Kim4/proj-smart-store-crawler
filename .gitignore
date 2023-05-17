@@ -38,6 +38,7 @@ out/
 
 ## properties
 application-key.yml
+application-dev.yml
 
 
 ## sample data
