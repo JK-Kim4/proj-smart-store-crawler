@@ -3,7 +3,7 @@ spring:
     charset: UTF-8
   config:
     activate:
-      on-profile: key
+      on-profile: dev
 
 server:
   servlet:
